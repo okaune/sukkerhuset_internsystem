@@ -1,0 +1,46 @@
+version: "3"
+
+services:
+  api:
+    build: packages/api
+    image: shi-api
+    container_name: shi-api
+    restart: unless-stopped
+    expose:
+      - "4000"
+    environment:
+      - DB_USERNAME
+      - DB_PASSWORD
+      - DB_HOST=db
+      - DB_NAME=$MONGO_INITDB_DATABASE
+      - SESS_SECRET
+      - REDIS_HOST=cache
+      - REDIS_PASSWORD
+    depends_on:
+      - db
+      - cache
+
+  db:
+    image: mongo
+    container_name: shi-db
+    user: $UID
+    expose:
+      - "27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD
+      - MONGO_INITDB_DATABASE
+      - DB_USERNAME
+      - DB_PASSWORD
+    volumes:
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh
+      - ./data:/data/db
+
+  cache:
+    image: redis:alpine
+    container_name: shi-cache
+    expose:
+      - "6379"
+    environment:
+      - REDIS_PASSWORD
+    command: ['--requirepass "$REDIS_PASSWORD"']
